@@ -15,12 +15,19 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUM_OF_AVERAGE_SAMPLES 2000    //Number of values picked for average adc calculation
-#define MEASURED_VCC_REF 4.75          //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
-#define SHUNT_RESISTOR_OHM 1.00        //Value of Shunt Resistor (Ohm) to measure intensity of discharge
+#define NUM_OF_AVERAGE_SAMPLES 2000     //Number of values picked for average adc calculation
+#define MEASURED_VCC_REF 4.75           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
+#define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
+#define PIN_RELAY_OR_MOSFET 7           //PIN used to start or stop the discharge 
+#define PIN_RELAY_DEFAULT 0             //Not Used yet
+#define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
 
 void setup() {
   // put your setup code here, to run once:
+  pinMode(PIN_BUTTON, INPUT);
+  pinMode(PIN_RELAY_OR_MOSFET, OUTPUT);
+  digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
+
   Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.clearDisplay();
@@ -48,33 +55,46 @@ float getVoltage(int pin){
   return value / 1023 * MEASURED_VCC_REF;
 }
 
-float getIntesity(int pin){
+float getIntensity(int pin){
   float voltage = getVoltage(pin);
   return voltage / SHUNT_RESISTOR_OHM;
 }
 
 float getPower(){
   float voltage = getVoltage(A0);
-  float intensity = getIntesity(A1);
+  float intensity = getIntensity(A1);
   float power = (voltage * intensity);
   return power;
+}
+
+void DisplayInstant(){
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.print(getVoltage(A0)); display.print("V ");     //Display Voltage
+  display.print(getIntensity(A1)); display.print("A ");   //Display Intensity
+  display.print(getPower()); display.print("W ");         //Display Power
+  display.display();
 }
 
 
 
 void loop() {
   // put your main code here, to run repeatedly:
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  //Print measured voltage from cell connected
-  display.setCursor(0, 0);
-  display.print(getVoltage(A0)); display.print("V ");
-  display.print(getIntesity(A1)); display.print("A ");
-  display.print(getPower()); display.print("W ");
-  display.setCursor(0, 9);
-  display.print(millis()/1000);
-  display.display();
-  //delay(500);
+  digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
+  DisplayInstant();
+  //int resetTime = millis();
+  if (digitalRead(PIN_BUTTON) == HIGH){
+    uint32_t resetTime = millis();
+    digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
+    while (digitalRead(PIN_BUTTON) == HIGH){
+      DisplayInstant();
+      display.setCursor(0, 9);
+      uint32_t TimeElapsed = millis() - resetTime;
+      display.print(TimeElapsed/1000);                       //Display Time
+      display.display();
+    }
+  }
 
 }
