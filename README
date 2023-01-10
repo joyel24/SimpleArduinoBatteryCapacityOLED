@@ -1,5 +1,9 @@
 Simple Battery Capacity Tester using Sparkfun Arduino Pro Micro and 32x128 SSD1306 OLED screen
 
-PINS :
-SDA -> PIN2
-SCK -> PIN3
+PINS connections :
+  SSD1306 Oled Display
+    SDA -> PIN2
+    SCK -> PIN3
+
+  Vbat to A0
+  Shunt Resistor to A1
