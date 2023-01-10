@@ -5,5 +5,7 @@ PINS connections :
     SDA -> PIN2
     SCK -> PIN3
 
-  Vbat to A0
-  Shunt Resistor to A1
+  Vbat -> A0
+  Shunt Resistor -> A1
+  Relay Or MOSFET -> PIN7
+  Discharche button on/off -> PIN5
