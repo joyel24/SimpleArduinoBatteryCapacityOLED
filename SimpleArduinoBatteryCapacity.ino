@@ -1,7 +1,5 @@
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <EEPROM.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -15,22 +13,27 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUM_OF_AVERAGE_SAMPLES 500     //Number of values picked for average adc calculation
+#define NUM_OF_AVERAGE_SAMPLES 500      //Number of values picked for average adc calculation
 #define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
 #define MEASURED_VCC_WITH_LOAD 4.95     //
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to start or stop the discharge 
 #define PIN_RELAY_DEFAULT 0             //Not Used yet
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
-#define STOP_DISCHARGE_VOLTAGE 3.2     //
+#define STOP_DISCHARGE_VOLTAGE 0.00     //
 #define VOLTAGE_PIN A3
 #define INTENSITY_PIN A0
+
+float mAsEEPROMstored;
+float mAs = 0;
+uint32_t secondsElapsed;
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(PIN_BUTTON, INPUT);
   pinMode(PIN_RELAY_OR_MOSFET, OUTPUT);
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
+  EEPROM.get(0, mAsEEPROMstored);
 
   Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
@@ -74,42 +77,44 @@ float getPower(){
   return power;
 }
 
-void DisplayRefresh(uint32_t SecondsElapsed, float mAh){   //Function to display instant voltage, intensity and power on 1st line & other function parameters
+void displayRefresh(uint32_t SecondsElapsed){   //Function to display instant voltage, intensity and power on 1st line & other function parameters
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
-  display.print(getVoltage(VOLTAGE_PIN)); display.print("V ");     //Display Voltage
-  display.print(getIntensity(INTENSITY_PIN), 3); display.print("A ");   //Display Intensity
+  display.print(getVoltage(VOLTAGE_PIN), 3); display.print("V ");     //Display Voltage
+  display.print(1000* (getIntensity(INTENSITY_PIN)), 0); display.print("mA ");   //Display Intensity
   display.print(getPower()); display.print("W ");         //Display Power
   display.setCursor(0, 9);
   display.print(SecondsElapsed);; display.print("s ");    //Timer
-  display.print(mAh);; display.print("mAh ");
+  display.print(mAs/3600); display.println("mAh ");
+  EEPROM.get(0, mAsEEPROMstored);
+  display.print(mAsEEPROMstored / 3600);display.println("mAh ");
   display.display();
 }
-
-
 
 void loop() {
   // put your main code here, to run repeatedly:
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
-  float mAs = 0;
-  float mAh = mAs/3600;
   int millisecFormAsInterval = 2000;
-  DisplayRefresh(0, 0);
+  displayRefresh(secondsElapsed);
   if (digitalRead(PIN_BUTTON) == HIGH){
     uint32_t resetTime = millis();
     uint32_t startMillisFormAs = millis();
+    mAs = 0;                                //Reset mA of actual counter
     while (digitalRead(PIN_BUTTON) == HIGH && getVoltage(VOLTAGE_PIN) >= STOP_DISCHARGE_VOLTAGE){
       digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
       uint32_t TimeElapsed = millis() - resetTime;
       if ( (millis()-startMillisFormAs) >= millisecFormAsInterval){
         mAs += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+        mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+        if (EEPROM.read(0) != mAsEEPROMstored){
+          EEPROM.put(0, mAsEEPROMstored);
+          }
         startMillisFormAs = millis();
       }
-      mAh = mAs/3600;
-      //Serial.print(mAs);Serial.print("mas ");Serial.print(mAh);Serial.println("mah ");
-      DisplayRefresh(TimeElapsed/1000, mAh);
+      displayRefresh(TimeElapsed/1000);
+      secondsElapsed = TimeElapsed/1000;
     }
   }
 
