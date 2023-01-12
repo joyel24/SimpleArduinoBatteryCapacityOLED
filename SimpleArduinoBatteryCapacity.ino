@@ -1,5 +1,6 @@
 #include <Adafruit_SSD1306.h>
 #include <EEPROM.h>
+#include "OneButton.h"  //http://www.mathertel.de/Arduino/OneButtonLibrary.aspx
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -17,23 +18,32 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
 #define MEASURED_VCC_WITH_LOAD 4.95     //
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
-#define PIN_RELAY_OR_MOSFET 7           //PIN used to start or stop the discharge 
-#define PIN_RELAY_DEFAULT 0             //Not Used yet
+#define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
-#define STOP_DISCHARGE_VOLTAGE 0.00     //
-#define VOLTAGE_PIN A3
-#define INTENSITY_PIN A0
+#define STOP_DISCHARGE_VOLTAGE 0.00     //Stop discharge protection !!!!!!!!!!!!To Improove!!!!!!!!!!!
+#define VOLTAGE_PIN A3                  //Battery voltage pin input
+#define INTENSITY_PIN A0                //Pin connected to Shunt Resistor
+#define PIN_BUTTON_FOR_MENU 16          //Pin connected to Menu/Function button
 
-float mAsEEPROMstored;
-float mAs = 0;
+float mAsEEPROMstored;                  //Variable synced to EEPROM mas data (mAs=mah*3600)
+float mAs = 0;                          //milli-Ampere-seconds : mAh=mAs/3600
 uint32_t secondsElapsed;
 
+bool menuActive = false;
+bool exitMenu = false;
+OneButton button(PIN_BUTTON_FOR_MENU, true);  //button definition for OneButton Library http://www.mathertel.de/Arduino/OneButtonLibrary.aspx
+int selectedMenu;                             //Variable corresponding to the active item in menu
+uint32_t antiMenuLoopbackMilliSeconds;        //Anti Loopback after menu exited
+
 void setup() {
-  // put your setup code here, to run once:
   pinMode(PIN_BUTTON, INPUT);
   pinMode(PIN_RELAY_OR_MOSFET, OUTPUT);
-  digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
-  EEPROM.get(0, mAsEEPROMstored);
+  digitalWrite(PIN_RELAY_OR_MOSFET, LOW);     //Ensure discharge relay is off
+  EEPROM.get(0, mAsEEPROMstored);             //get float data stored from address 0 of EEPROM (Address 0 to 3 as float is 4bytes long)
+  
+  pinMode(PIN_BUTTON_FOR_MENU, INPUT_PULLUP); //
+  button.attachLongPressStart(menulongPress); //Theses lines are needed for the OneButton Library
+  button.attachClick(oneClick);               //Run function name beetween () when button action is detected
 
   Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
@@ -46,6 +56,46 @@ void setup() {
   display.println("Welcome");
   display.display();
   delay(2000);
+}
+
+void menulongPress(){
+    switch (selectedMenu){
+        case 1:
+            mAsEEPROMstored = 0;
+            EEPROM.put(0, mAsEEPROMstored);
+            display.clearDisplay();
+            display.setTextSize(1);
+            display.setCursor(0, 0);
+            display.println("EEPROM data set to 0");
+            display.display();
+            delay(1500);
+          break;
+        case 2:
+          
+          break;
+        case 3:
+          exitMenu = true;
+          menuActive = false;
+          antiMenuLoopbackMilliSeconds = millis();
+          break;
+    }
+  //}
+}
+
+void oneClick(){
+  if (menuActive == false && (millis() - antiMenuLoopbackMilliSeconds > 2000) ){
+    Menu();
+  }
+  else if (menuActive == true){
+    switch (digitalRead(PIN_BUTTON)){
+        case LOW:
+          selectedMenu+=1;
+          break;
+        case HIGH:
+          selectedMenu-=1;
+          break;
+      }
+  }
 }
 
 //Function to get adc value from a desired pin with averaging samples defined by NUM_OF_AVERAGE_SAMPLES
@@ -93,11 +143,55 @@ void displayRefresh(uint32_t SecondsElapsed){   //Function to display instant vo
   display.display();
 }
 
+void Menu(){
+  menuActive = true;
+  exitMenu = false;
+  display.clearDisplay();
+  display.setTextSize(3);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.println("MENU");
+  display.display();
+  delay(1000);
+  while (exitMenu == false){
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    switch (selectedMenu){
+      case 1:
+        display.println(">Reset EEPROM");
+        display.println("2");
+        display.println("Exit Menu");
+        break;
+      case 2:
+        display.println("Reset EEPROM");
+        display.println(">2");
+        display.println("Exit Menu");
+        break;
+      case 3:
+        display.println("Reset EEPROM");
+        display.println("2");
+        display.println(">Exit Menu");
+        break;
+      default:
+        if (selectedMenu < 1){
+          selectedMenu = 3;
+          break;
+        }
+        else {selectedMenu = 1;}
+        break;
+    }
+    button.tick();
+    display.display();
+  }
+}
+
 void loop() {
-  // put your main code here, to run repeatedly:
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
   int millisecFormAsInterval = 2000;
   displayRefresh(secondsElapsed);
+  button.tick();
   if (digitalRead(PIN_BUTTON) == HIGH){
     uint32_t resetTime = millis();
     uint32_t startMillisFormAs = millis();
