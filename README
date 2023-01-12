@@ -4,8 +4,3 @@ PINS connections :
   SSD1306 Oled Display
     SDA -> PIN2
     SCK -> PIN3
-
-  Vbat -> A0
-  Shunt Resistor -> A1
-  Relay Or MOSFET -> PIN7
-  Discharche button on/off -> PIN5
