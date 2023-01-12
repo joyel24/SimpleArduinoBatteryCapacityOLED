@@ -16,7 +16,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUM_OF_AVERAGE_SAMPLES 500      //Number of values picked for average adc calculation
 #define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
-#define MEASURED_VCC_WITH_LOAD 4.95     //
+#define MEASURED_VCC_WITH_LOAD 4.95     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
@@ -24,6 +24,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define VOLTAGE_PIN A3                  //Battery voltage pin input
 #define INTENSITY_PIN A0                //Pin connected to Shunt Resistor
 #define PIN_BUTTON_FOR_MENU 16          //Pin connected to Menu/Function button
+#define NUM_ATTEMPTS_INTERNAL_RES 5     //Number of attempts to calculate internal resistance
+#define INTERNAL_RESITANCE_DURATION 100 //Duration of each internal resistance test
+#define MEASURED_LOAD_RESISTANCE 17.6   //Measured load resistance (I recommend using OhmMeter in the battery socket with discharge ON with #define STOP_DISCHARGE_VOLTAGE 0.00)
+
 
 float mAsEEPROMstored;                  //Variable synced to EEPROM mas data (mAs=mah*3600)
 float mAs = 0;                          //milli-Ampere-seconds : mAh=mAs/3600
@@ -61,17 +65,23 @@ void setup() {
 void menulongPress(){
     switch (selectedMenu){
         case 1:
-            mAsEEPROMstored = 0;
-            EEPROM.put(0, mAsEEPROMstored);
-            display.clearDisplay();
-            display.setTextSize(1);
-            display.setCursor(0, 0);
-            display.println("EEPROM data set to 0");
-            display.display();
-            delay(1500);
+          mAsEEPROMstored = 0;
+          EEPROM.put(0, mAsEEPROMstored);
+          display.clearDisplay();
+          display.setTextSize(1);
+          display.setCursor(0, 0);
+          display.println("EEPROM data set to 0");
+          display.display();
+          delay(1500);
           break;
         case 2:
-          
+          display.clearDisplay();
+          display.setTextSize(2);
+          display.setCursor(0, 0);
+          display.print(getInternalRes(17.6, NUM_ATTEMPTS_INTERNAL_RES, INTERNAL_RESITANCE_DURATION), 0);
+          display.print("mOhm");
+          display.display();
+          delay(5000);
           break;
         case 3:
           exitMenu = true;
@@ -79,7 +89,6 @@ void menulongPress(){
           antiMenuLoopbackMilliSeconds = millis();
           break;
     }
-  //}
 }
 
 void oneClick(){
@@ -99,16 +108,16 @@ void oneClick(){
 }
 
 //Function to get adc value from a desired pin with averaging samples defined by NUM_OF_AVERAGE_SAMPLES
-int getadcValue(int pin){
+int getadcValue(int pin, int numSamples){
   uint32_t adcValuesTotal = 0;
-  for (int n = 0; n < NUM_OF_AVERAGE_SAMPLES; n++){ //Averaging values for n sample
+  for (int n=0; n<numSamples; n++){ //Averaging values for n sample
     adcValuesTotal += analogRead(pin);
   }
-  return adcValuesTotal / NUM_OF_AVERAGE_SAMPLES;;
+  return adcValuesTotal / numSamples;;
 }
 
 float getVoltage(int pin){
-  float value = getadcValue(pin);
+  float value = getadcValue(pin, NUM_OF_AVERAGE_SAMPLES);
   if (digitalRead(PIN_RELAY_OR_MOSFET) == LOW){
   return value / 1023 * MEASURED_VCC_REF;
   }
@@ -125,6 +134,39 @@ float getPower(){
   float intensity = getIntensity(INTENSITY_PIN);
   float power = (voltage * intensity);
   return power;
+}
+
+float getInternalRes(float loadRes, int attempts, int msDelay){
+  display.clearDisplay();
+  float accumulatedInternalResForAverage=0;
+  for (int n=0; n<attempts; n++){
+    float CalculatedInternalRes=0;
+    float deltaVoltage=0;
+    float ratioVoltage=0;
+    float initialVoltage = getVoltage(VOLTAGE_PIN);
+    uint32_t StartMillis = millis();
+    digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
+    while (millis() - StartMillis <= msDelay){
+    }
+    float droppedVoltage = getVoltage(VOLTAGE_PIN);
+    deltaVoltage = initialVoltage - droppedVoltage;
+    ratioVoltage = droppedVoltage/initialVoltage;
+    CalculatedInternalRes = 1000*(-MEASURED_LOAD_RESISTANCE+MEASURED_LOAD_RESISTANCE*(1/ratioVoltage));
+    accumulatedInternalResForAverage += CalculatedInternalRes;
+    /*Serial.print(initialVoltage, 3);Serial.println("V init");
+    Serial.print(n);Serial.print("n ");Serial.println(droppedVoltage, 3);
+    Serial.print("deltaVoltage : ");Serial.println(deltaVoltage, 3);
+    Serial.print("ratioVoltage");Serial.println(ratioVoltage, 3);
+    Serial.print("CalculatedInternalRes : ");Serial.println(CalculatedInternalRes);
+    Serial.print("DeltaVMoyenne : ");Serial.println((accumulatedDeltaVoltageForAverage / (n+1)), 3);Serial.println();
+    */
+    digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
+    delay(msDelay);
+    //Serial.print("CalculatedInternalRes : ");Serial.println(CalculatedInternalRes);
+    //Serial.print("Moy : ");Serial.println(accumulatedInternalResForAverage / (n+1));
+  }
+  //Serial.println(accumulatedInternalResForAverage / attempts);
+  return accumulatedInternalResForAverage / attempts;
 }
 
 void displayRefresh(uint32_t SecondsElapsed){   //Function to display instant voltage, intensity and power on 1st line & other function parameters
@@ -152,7 +194,7 @@ void Menu(){
   display.setCursor(0, 0);
   display.println("MENU");
   display.display();
-  delay(1000);
+  delay(500);
   while (exitMenu == false){
     display.clearDisplay();
     display.setTextSize(1);
@@ -161,17 +203,17 @@ void Menu(){
     switch (selectedMenu){
       case 1:
         display.println(">Reset EEPROM");
-        display.println("2");
+        display.println("Internal Resistance");
         display.println("Exit Menu");
         break;
       case 2:
         display.println("Reset EEPROM");
-        display.println(">2");
+        display.println(">Internal Resistance");
         display.println("Exit Menu");
         break;
       case 3:
         display.println("Reset EEPROM");
-        display.println("2");
+        display.println("Internal Resistance");
         display.println(">Exit Menu");
         break;
       default:
