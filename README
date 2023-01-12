@@ -14,3 +14,4 @@ To Do :
 - [OK] Erase EEPROM via menu caapability
 - [OK] Try to implement battery internal Resistance calculator
 - Add max intensity to prevent from short circuit or load resistance too low
+- Add History function
