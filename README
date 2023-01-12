@@ -7,3 +7,9 @@ PINS connections :
 
 You can access the menu when discharge is off by clicking (shortclick) the pushbutton.
 Navigate in menu using discharge button on/off to go down/up and 1 click to go up or down depending on the On/Off state, longpress to select item in menu
+
+To Do :
+- [OK] Add feature to store data in EEPROM to keed data even after reset or unwanted poweroff.
+- [OK] Add Menu
+- [OK] Erase EEPROM via menu caapability
+- Try to implement battery nternal Resistance calculator
