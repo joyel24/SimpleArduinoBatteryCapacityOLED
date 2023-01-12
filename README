@@ -12,5 +12,5 @@ To Do :
 - [OK] Add feature to store data in EEPROM to keed data even after reset or unwanted poweroff.
 - [OK] Add Menu
 - [OK] Erase EEPROM via menu caapability
-- Try to implement battery internal Resistance calculator
+- [OK] Try to implement battery internal Resistance calculator
 - Add max intensity to prevent from short circuit or load resistance too low
