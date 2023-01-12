@@ -4,3 +4,6 @@ PINS connections :
   SSD1306 Oled Display
     SDA -> PIN2
     SCK -> PIN3
+
+You can access the menu when discharge is off by clicking (shortclick) the pushbutton.
+Navigate in menu using discharge button on/off to go down/up and 1 click to go up or down depending on the On/Off state, longpress to select item in menu
