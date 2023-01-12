@@ -13,3 +13,4 @@ To Do :
 - [OK] Add Menu
 - [OK] Erase EEPROM via menu caapability
 - Try to implement battery internal Resistance calculator
+- Add max intensity to prevent from short circuit or load resistance too low
