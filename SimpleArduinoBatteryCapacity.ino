@@ -14,7 +14,7 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUM_OF_AVERAGE_SAMPLES 500      //Number of values picked for average adc calculation
+#define NUM_OF_AVERAGE_SAMPLES 800      //Number of values picked for average adc calculation
 #define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
 #define MEASURED_VCC_WITH_LOAD 4.95     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
@@ -230,8 +230,9 @@ void Menu(){
 }
 
 void loop() {
+  uint32_t xxx=0;
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
-  int millisecFormAsInterval = 2000;
+  int millisecFormAsInterval = 5000;
   displayRefresh(secondsElapsed);
   button.tick();
   if (digitalRead(PIN_BUTTON) == HIGH){
@@ -246,6 +247,15 @@ void loop() {
         mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
         if (EEPROM.read(0) != mAsEEPROMstored){
           EEPROM.put(0, mAsEEPROMstored);
+          display.setTextSize(1);
+          display.setTextColor(WHITE);
+          display.setCursor(64, 20);
+          
+          xxx++;
+          display.print(5*xxx);
+          display.setCursor(84, 20);
+          display.print(millis()-startMillisFormAs);
+          display.display();
           }
         startMillisFormAs = millis();
       }
