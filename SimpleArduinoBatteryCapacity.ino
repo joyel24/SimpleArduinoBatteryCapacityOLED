@@ -15,8 +15,8 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUM_OF_AVERAGE_SAMPLES 800      //Number of values picked for average adc calculation
-#define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
-#define MEASURED_VCC_WITH_LOAD 4.95     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
+#define MEASURED_VCC_REF 4.966           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
+#define MEASURED_VCC_WITH_LOAD 4.966     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
@@ -26,7 +26,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define PIN_BUTTON_FOR_MENU 16          //Pin connected to Menu/Function button
 #define NUM_ATTEMPTS_INTERNAL_RES 5     //Number of attempts to calculate internal resistance
 #define INTERNAL_RESITANCE_DURATION 100 //Duration of each internal resistance test
-#define MEASURED_LOAD_RESISTANCE 17.6   //Measured load resistance (I recommend using OhmMeter in the battery socket with discharge ON with #define STOP_DISCHARGE_VOLTAGE 0.00)
+#define MEASURED_LOAD_RESISTANCE 17.175   //Measured load resistance (I recommend using OhmMeter in the battery socket with discharge ON with #define STOP_DISCHARGE_VOLTAGE 0.00)
 
 
 float mAsEEPROMstored;                  //Variable synced to EEPROM mas data (mAs=mah*3600)
