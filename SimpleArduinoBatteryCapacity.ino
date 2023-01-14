@@ -235,7 +235,7 @@ void Menu(){
 void loop() {
   uint32_t xxx=0;
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
-  int millisecFormAsInterval = 5000;
+  int millisecFormAsInterval = 1000;
   displayRefresh(secondsElapsed);
   button.tick();
   if (digitalRead(PIN_BUTTON) == HIGH){
@@ -245,7 +245,8 @@ void loop() {
     while (digitalRead(PIN_BUTTON) == HIGH && getVoltage(VOLTAGE_PIN) >= STOP_DISCHARGE_VOLTAGE){
       digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
       uint32_t TimeElapsed = millis() - resetTime;
-      if ( (millis()-startMillisFormAs) >= millisecFormAsInterval){
+      //if ( (millis()-startMillisFormAs) >= millisecFormAsInterval){
+      if ( ((TimeElapsed/1000) > xxx) ){
         mAs += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
         mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
         if (EEPROM.read(0) != mAsEEPROMstored){
@@ -255,7 +256,7 @@ void loop() {
           display.setCursor(64, 20);
           
           xxx++;
-          display.print(5*xxx);
+          display.print(xxx);
           display.setCursor(84, 20);
           display.print(millis()-startMillisFormAs);
           display.display();
