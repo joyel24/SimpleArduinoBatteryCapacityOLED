@@ -20,7 +20,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
-#define STOP_DISCHARGE_VOLTAGE 0.00     //Stop discharge protection !!!!!!!!!!!!To Improove!!!!!!!!!!!
+#define STOP_DISCHARGE_VOLTAGE 0.85     //Stop discharge protection !!!!!!!!!!!!To Improove!!!!!!!!!!!
 #define VOLTAGE_PIN A3                  //Battery voltage pin input
 #define INTENSITY_PIN A0                //Pin connected to Shunt Resistor
 #define PIN_BUTTON_FOR_MENU 16          //Pin connected to Menu/Function button
@@ -237,42 +237,52 @@ void Menu(){
 
 void loop() {
   uint32_t xxx=0;
+  uint32_t yyy=0;
+  bool STOP=false;
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
-  int millisecFormAsInterval = 1000;
+  int millisecFormAsInterval = 2000;
   float mAsTempStoredForEEPROMdelay=0;
   displayRefresh(secondsElapsed);
   button.tick();
-  if (digitalRead(PIN_BUTTON) == HIGH){
+  while (digitalRead(PIN_BUTTON) == HIGH){
     mAsTempStoredForEEPROMdelay = mAsEEPROMstored;
     uint32_t resetTime = millis();
     uint32_t startMillisFormAs = millis();
     mAs = 0;                                //Reset mA of actual counter
-    while (digitalRead(PIN_BUTTON) == HIGH && getVoltage(VOLTAGE_PIN) >= STOP_DISCHARGE_VOLTAGE){
-      digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
-      uint32_t TimeElapsed = millis() - resetTime;
-      //if ( (millis()-startMillisFormAs) >= millisecFormAsInterval){
-      if ( ((TimeElapsed/1000) > xxx) ){
-        mAs += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
-        mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
-        mAsTempStoredForEEPROMdelay += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
-        Serial.print(mAs);Serial.print(" ");Serial.print(mAsEEPROMstored);Serial.print(" ");Serial.println(mAsTempStoredForEEPROMdelay);
-        if ( (EEPROM.read(0)!=mAsEEPROMstored) && ((TimeElapsed/1000)>(xxx*10)) ){
-          //EEPROM.put(0, mAsEEPROMstored);
-          EEPROM.put(0, mAsTempStoredForEEPROMdelay);
-          display.setTextSize(1);
-          display.setTextColor(WHITE);
-          display.setCursor(64, 20);
-          
-          xxx++;
-          display.print(xxx);
-          display.setCursor(84, 20);
-          display.print(millis()-startMillisFormAs);
-          display.display();
-          }
-        startMillisFormAs = millis();
+    if (STOP==false){
+      while (STOP==false && (getVoltage(VOLTAGE_PIN) >= STOP_DISCHARGE_VOLTAGE)){
+        if (digitalRead(PIN_BUTTON) == LOW){
+          break;
+        }
+        digitalWrite(PIN_RELAY_OR_MOSFET, HIGH);
+        uint32_t TimeElapsed = millis() - resetTime;
+        //if ( (millis()-startMillisFormAs) >= millisecFormAsInterval){
+        if ( (TimeElapsed/millisecFormAsInterval) > xxx/(millisecFormAsInterval/1000) ) {
+          mAs += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+          mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+          mAsTempStoredForEEPROMdelay += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+          xxx+=2;
+          //Serial.print(yyy);Serial.print(" ");Serial.print(TimeElapsed/1000);Serial.print(" ");Serial.println(xxx);
+          if ( (EEPROM.read(0)!=mAsEEPROMstored) && ((TimeElapsed/1000)>(yyy*2)) ){
+            //EEPROM.put(0, mAsEEPROMstored);
+            EEPROM.put(0, mAsTempStoredForEEPROMdelay);
+            //display.setTextSize(1);
+            //display.setTextColor(WHITE);
+            //display.setCursor(64, 20);
+            
+            yyy+=5;
+            //display.print(xxx);
+            //display.setCursor(84, 20);
+            //display.print(millis()-startMillisFormAs);
+            //display.display();
+            }
+          startMillisFormAs = millis();
+        }
+        displayRefresh(TimeElapsed/1000);
+        secondsElapsed = TimeElapsed/1000;
       }
-      displayRefresh(TimeElapsed/1000);
-      secondsElapsed = TimeElapsed/1000;
+      digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
+      STOP=true;
     }
     EEPROM.put(0, mAsTempStoredForEEPROMdelay);
   }
