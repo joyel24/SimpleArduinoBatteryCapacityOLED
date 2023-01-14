@@ -15,3 +15,4 @@ To Do :
 - [OK] Try to implement battery internal Resistance calculator
 - Add max intensity to prevent from short circuit or load resistance too low
 - Add History function
+- Connect & control Buck to charge ?
