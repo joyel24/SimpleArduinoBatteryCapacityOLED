@@ -15,8 +15,8 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUM_OF_AVERAGE_SAMPLES 800      //Number of values picked for average adc calculation
-#define MEASURED_VCC_REF 4.95           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
-#define MEASURED_VCC_WITH_LOAD 4.95     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
+#define MEASURED_VCC_REF 4.966           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
+#define MEASURED_VCC_WITH_LOAD 4.966     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
@@ -26,7 +26,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define PIN_BUTTON_FOR_MENU 16          //Pin connected to Menu/Function button
 #define NUM_ATTEMPTS_INTERNAL_RES 5     //Number of attempts to calculate internal resistance
 #define INTERNAL_RESITANCE_DURATION 100 //Duration of each internal resistance test
-#define MEASURED_LOAD_RESISTANCE 17.6   //Measured load resistance (I recommend using OhmMeter in the battery socket with discharge ON with #define STOP_DISCHARGE_VOLTAGE 0.00)
+#define MEASURED_LOAD_RESISTANCE 17.175   //Measured load resistance (I recommend using OhmMeter in the battery socket with discharge ON with #define STOP_DISCHARGE_VOLTAGE 0.00)
 #define ADC_INTENSITY_OFFSET_MINIMUM (13.20-4.8387)
 
 float mAsEEPROMstored;                  //Variable synced to EEPROM mas data (mAs=mah*3600)
@@ -39,11 +39,11 @@ OneButton button(PIN_BUTTON_FOR_MENU, true);  //button definition for OneButton 
 int selectedMenu;                             //Variable corresponding to the active item in menu
 uint32_t antiMenuLoopbackMilliSeconds;        //Anti Loopback after menu exited
 
+
 void setup() {
   pinMode(PIN_BUTTON, INPUT);
   pinMode(PIN_RELAY_OR_MOSFET, OUTPUT);
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);     //Ensure discharge relay is off
-  EEPROM.get(0, mAsEEPROMstored);             //get float data stored from address 0 of EEPROM (Address 0 to 3 as float is 4bytes long)
   
   pinMode(PIN_BUTTON_FOR_MENU, INPUT_PULLUP); //
   button.attachLongPressStart(menulongPress); //Theses lines are needed for the OneButton Library
@@ -63,6 +63,9 @@ void setup() {
 }
 
 void menulongPress(){
+    if (menuActive == false && (millis() - antiMenuLoopbackMilliSeconds > 2000) ){
+      Menu();
+    }
     switch (selectedMenu){
         case 1:
           mAsEEPROMstored = 0;
@@ -78,7 +81,7 @@ void menulongPress(){
           display.clearDisplay();
           display.setTextSize(2);
           display.setCursor(0, 0);
-          display.print(getInternalRes(17.6, NUM_ATTEMPTS_INTERNAL_RES, INTERNAL_RESITANCE_DURATION), 0);
+          display.print(getInternalRes(MEASURED_LOAD_RESISTANCE, NUM_ATTEMPTS_INTERNAL_RES, INTERNAL_RESITANCE_DURATION), 0);
           display.print("mOhm");
           display.display();
           delay(5000);
@@ -183,7 +186,7 @@ void displayRefresh(uint32_t SecondsElapsed){   //Function to display instant vo
   display.setCursor(0, 9);
   display.print(SecondsElapsed);; display.print("s ");    //Timer
   display.print(mAs/3600); display.println("mAh ");
-  EEPROM.get(0, mAsEEPROMstored);
+  EEPROM.get(0, mAsEEPROMstored);           //get float data stored from address 0 of EEPROM (Address 0 to 3 as float is 4bytes long)
   display.print(mAsEEPROMstored / 3600);display.println("mAh ");
   display.display();
 }
@@ -236,9 +239,11 @@ void loop() {
   uint32_t xxx=0;
   digitalWrite(PIN_RELAY_OR_MOSFET, LOW);
   int millisecFormAsInterval = 1000;
+  float mAsTempStoredForEEPROMdelay=0;
   displayRefresh(secondsElapsed);
   button.tick();
   if (digitalRead(PIN_BUTTON) == HIGH){
+    mAsTempStoredForEEPROMdelay = mAsEEPROMstored;
     uint32_t resetTime = millis();
     uint32_t startMillisFormAs = millis();
     mAs = 0;                                //Reset mA of actual counter
@@ -249,8 +254,11 @@ void loop() {
       if ( ((TimeElapsed/1000) > xxx) ){
         mAs += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
         mAsEEPROMstored += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
-        if (EEPROM.read(0) != mAsEEPROMstored){
-          EEPROM.put(0, mAsEEPROMstored);
+        mAsTempStoredForEEPROMdelay += (getIntensity(INTENSITY_PIN)*1000) * (millisecFormAsInterval/1000);
+        Serial.print(mAs);Serial.print(" ");Serial.print(mAsEEPROMstored);Serial.print(" ");Serial.println(mAsTempStoredForEEPROMdelay);
+        if ( (EEPROM.read(0)!=mAsEEPROMstored) && ((TimeElapsed/1000)>(xxx*10)) ){
+          //EEPROM.put(0, mAsEEPROMstored);
+          EEPROM.put(0, mAsTempStoredForEEPROMdelay);
           display.setTextSize(1);
           display.setTextColor(WHITE);
           display.setCursor(64, 20);
@@ -266,6 +274,7 @@ void loop() {
       displayRefresh(TimeElapsed/1000);
       secondsElapsed = TimeElapsed/1000;
     }
+    EEPROM.put(0, mAsTempStoredForEEPROMdelay);
   }
 
 }
