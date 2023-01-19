@@ -19,3 +19,6 @@ To Do :
 - Add History function
 - Connect & control Buck to charge ?
 - Make readable schematics (my draft paper is very ugly)
+
+Exemple result with Ni-MH 1.2V Cell :
+![Image](.readme/BetterPictureComing.jpg)
