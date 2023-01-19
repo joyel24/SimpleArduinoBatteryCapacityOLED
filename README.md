@@ -17,8 +17,9 @@ To Do :
 - Add Wh counter
 - Add max intensity parameter to prevent from short circuit or load resistance too low
 - Add History function
-- Connect & control Buck to charge ?
+- Connect & control Buck/boost to charge ?
 - Make readable schematics (my draft paper is very ugly)
+- Add Voltage divider feature in code to allow multi-cells accus
 
 Exemple result with Ni-MH 1.2V Cell :
 ![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/.readme/BetterPictureComing.jpg?raw=true)
