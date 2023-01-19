@@ -5,13 +5,17 @@ PINS connections :
     SDA -> PIN2
     SCK -> PIN3
 
-You can access the menu when discharge is off by clicking (shortclick) the pushbutton.
-Navigate in menu using discharge button on/off to go down/up and 1 click to go up or down depending on the On/Off state, longpress to select item in menu
+You can access the menu when discharge is off by clicking the pushbutton.
+Navigate in menu using push button (up or down depending on the On/Off state, longpress to select item in menu)
 
 To Do :
-- [OK] Add feature to store data in EEPROM to keed data even after reset or unwanted poweroff.
+- [OK] Add feature to store data in EEPROM to keep data even after reset or unwanted poweroff
 - [OK] Add Menu
 - [OK] Erase EEPROM via menu caapability
 - [OK] Try to implement battery internal Resistance calculator
-- Add max intensity to prevent from short circuit or load resistance too low
+- [OK] fix time shifting toooo much
+- Add Wh counter
+- Add max intensity parameter to prevent from short circuit or load resistance too low
 - Add History function
+- Connect & control Buck to charge ?
+- Make readable schematics (my draft paper is very ugly)
