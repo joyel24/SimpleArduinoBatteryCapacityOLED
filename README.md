@@ -14,13 +14,15 @@ To Do :
 - [OK] Erase EEPROM via menu caapability
 - [OK] Try to implement battery internal Resistance calculator
 - [OK] fix time shifting toooo much
+- [OK] Make readable schematics
 - Add Wh counter
+- Add Wh counter to EEPROM
+- Add seconds elapsed to EEPROM
 - Add max intensity parameter to prevent from short circuit or load resistance too low
 - Add History function
 - Connect & control Buck/boost to charge ?
-- Make readable schematics (my draft paper is very ugly)
 - Add Voltage divider feature in code to allow multi-cells accus
-- Add Low Voltage cut-off parameter in menu and store it in the EEPROM
+- Add Low Voltage cut-off parameter in menu and store it into the EEPROM
 
 Exemple result with Ni-MH 1.2V Cell :
 ![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/.readme/BetterPictureComing.jpg?raw=true)
