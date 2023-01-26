@@ -24,5 +24,9 @@ To Do :
 - Add Voltage divider feature in code to allow multi-cells accus
 - Add Low Voltage cut-off parameter in menu and store it into the EEPROM
 
-Exemple result with Ni-MH 1.2V Cell :
+Exemple result on screen with Ni-MH 1.2V Cell :
 ![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/.readme/BetterPictureComing.jpg?raw=true)
+
+My actual prototype looks like :
+![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/.readme/Actual_Prototype.jpg?raw=true)
+
