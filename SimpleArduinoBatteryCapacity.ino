@@ -22,8 +22,8 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUM_OF_AVERAGE_SAMPLES 800      //Number of values picked for average adc calculation
-#define MEASURED_VCC_REF 4.966           //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
-#define MEASURED_VCC_WITH_LOAD 4.966     //In case of powered by usb, you need to check VCC voltage to stay relative for ADC convertion
+#define MEASURED_VCC_REF 4.966          //Measured voltage accross ground and Vcc pin of your arduino (it can depends on its supply)
+#define MEASURED_VCC_WITH_LOAD 4.966    //As using relay consume current, you need to check VCC voltage drop when relay is on to stay relative for ADC convertion
 #define SHUNT_RESISTOR_OHM 1.00         //Value of Shunt Resistor (Ohm) to measure intensity of discharge
 #define PIN_RELAY_OR_MOSFET 7           //PIN used to drive the relay to start or stop the discharge 
 #define PIN_BUTTON 5                    //Pin of the button to start/stop discharge
