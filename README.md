@@ -31,3 +31,5 @@ Exemple result on screen with Ni-MH 1.2V Cell :
 My actual prototype looks like :
 ![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/.readme/Actual_Prototype.jpg?raw=true)
 
+You can find schematics in the kicad path.this is a preview : 
+![Image](https://github.com/joyel24/SimpleArduinoBatteryCapacityOLED/blob/main/KiCad/schematics.jpg?raw=true)
